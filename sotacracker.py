@@ -25,9 +25,13 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def getspots(self):
         self.time.setText(str(datetime.now(timezone.utc)).split()[1].split(".")[0][0:5])
-        request=requests.get(self.sotaurl,timeout=1.0)
-        spots = json.loads(request.text)
-        self.listWidget.clear()
+        spots = False
+        try:
+            request=requests.get(self.sotaurl,timeout=15.0)
+            spots = json.loads(request.text)
+            self.listWidget.clear()
+        except:
+            return
         justonce=[]
 
         for i in spots:
