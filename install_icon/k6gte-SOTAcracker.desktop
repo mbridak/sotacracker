@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=sotacracker
+StartupWMClass=sotacracker
+GenericName=K6GTE SOTAcracker
+Comment=Amateur Radio Communications
+Exec=sotacracker
+Icon=k6gte-SOTAcracker
+Terminal=false
+Type=Application
+Categories=HamRadio;
