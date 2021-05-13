@@ -5,7 +5,7 @@ from PyQt5 import uic
 from datetime import datetime,timezone
 
 class MainWindow(QtWidgets.QMainWindow):
-    sotaurl="https://api2.sota.org.uk/api/spots/20/all"
+    sotaurl="https://api2.sota.org.uk/api/spots/40/all"
     sotasorteddic={}
     rigctld_addr = "127.0.0.1"
     rigctld_port = 4532
@@ -33,12 +33,15 @@ class MainWindow(QtWidgets.QMainWindow):
         except:
             return
         justonce=[]
-
+        count = 0
         for i in spots:
             i['activatorCallsign']=i['activatorCallsign'].replace("\n", "").upper()
             i['activatorCallsign']=i['activatorCallsign'].replace(" ", "")
             if i['activatorCallsign'] in justonce:
                 continue
+            count += 1
+            if count > 20:
+                return
             justonce.append(i['activatorCallsign'])
             summit = f"{i['associationCode'].rjust(3)}/{i['summitCode'].rjust(6)}" # {i['summitDetails']}
             self.listWidget.addItem(f"{i['timeStamp'][11:16]} {i['activatorCallsign'].rjust(10)} {summit.ljust(9)} {i['frequency'].rjust(8)} {i['mode'].upper()}")
