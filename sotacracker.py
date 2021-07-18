@@ -10,6 +10,7 @@ class MainWindow(QtWidgets.QMainWindow):
     rigctld_addr = "127.0.0.1"
     rigctld_port = 4532
     bw = {}
+    lastclicked = ""
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -19,7 +20,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.bw['USB'] = '2400'
         self.bw['FM'] = '15000'
         self.bw['CW'] = '200'
-        pass
 
     def relpath(self, filename):
         try:
@@ -49,7 +49,11 @@ class MainWindow(QtWidgets.QMainWindow):
                 return
             justonce.append(i['activatorCallsign'])
             summit = f"{i['associationCode'].rjust(3)}/{i['summitCode'].rjust(6)}" # {i['summitDetails']}
-            self.listWidget.addItem(f"{i['timeStamp'][11:16]} {i['activatorCallsign'].rjust(10)} {summit.ljust(9)} {i['frequency'].rjust(8)} {i['mode'].upper()}")
+            spot = f"{i['timeStamp'][11:16]} {i['activatorCallsign'].rjust(10)} {summit.ljust(9)} {i['frequency'].rjust(8)} {i['mode'].upper()}"
+            self.listWidget.addItem(spot)
+            if spot[5:] == self.lastclicked[5:]:
+                founditem = self.listWidget.findItems(spot[5:], QtCore.Qt.MatchFlag.MatchContains)
+                founditem[0].setSelected(True)
 
     def spotclicked(self):
         """
@@ -59,6 +63,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         try:
             item = self.listWidget.currentItem()
+            self.lastclicked = item.text()
             line = item.text().split()
             freq = line[3].split(".")
             mode = line[4].upper()
@@ -73,7 +78,7 @@ class MainWindow(QtWidgets.QMainWindow):
                     mode = 'USB'
                 else:
                     mode = 'LSB'
-            command = 'M '+mode+ ' ' + self.bw[mode] + '\n'
+            command = 'M '+mode+ ' 0\n'
             radiosocket.send(command.encode('ascii'))
             radiosocket.shutdown(socket.SHUT_RDWR)
             radiosocket.close()
