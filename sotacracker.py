@@ -16,10 +16,6 @@ class MainWindow(QtWidgets.QMainWindow):
         super().__init__(parent)
         uic.loadUi(self.relpath("dialog.ui"), self)
         self.listWidget.clicked.connect(self.spotclicked)
-        self.bw['LSB'] = '2400'
-        self.bw['USB'] = '2400'
-        self.bw['FM'] = '15000'
-        self.bw['CW'] = '200'
 
     def relpath(self, filename):
         try:
