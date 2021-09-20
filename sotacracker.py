@@ -53,7 +53,7 @@ class MainWindow(QtWidgets.QMainWindow):
                         return
                     justonce.append(i['activatorCallsign'])
                     summit = f"{i['associationCode'].rjust(3)}/{i['summitCode'].rjust(6)}" # {i['summitDetails']}
-                    spot = f"{i['timeStamp'][11:16]} {i['activatorCallsign'].rjust(10)} {summit.ljust(9)} {i['frequency'].rjust(8)} {i['mode'].upper()}"
+                    spot = f"{i['timeStamp'][11:16]} {i['activatorCallsign'].rjust(12)} {summit.ljust(9)} {i['frequency'].rjust(8)} {i['mode'].upper()}"
                     self.listWidget.addItem(spot)
                     if spot[5:] == self.lastclicked[5:]:
                         founditem = self.listWidget.findItems(spot[5:], QtCore.Qt.MatchFlag.MatchContains)
@@ -119,12 +119,16 @@ class MainWindow(QtWidgets.QMainWindow):
         else:
             return "0"
 
-app = QtWidgets.QApplication(sys.argv)
-app.setStyle('Fusion')
-window = MainWindow()
-window.show()
-window.getspots()
-timer = QtCore.QTimer()
-timer.timeout.connect(window.getspots)
-timer.start(30000)
-app.exec()
+def main():
+    app = QtWidgets.QApplication(sys.argv)
+    app.setStyle('Fusion')
+    window = MainWindow()
+    window.show()
+    window.getspots()
+    timer = QtCore.QTimer()
+    timer.timeout.connect(window.getspots)
+    timer.start(30000)
+    app.exec()
+
+if __name__ == "__main__":
+    main()
