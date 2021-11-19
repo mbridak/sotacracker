@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-import requests, sys, os, socket, json
-from PyQt5 import QtCore, QtWidgets
-from PyQt5 import uic
+import requests, sys, os, socket
+from json import loads
+from PyQt5 import QtCore, QtWidgets, uic
 from datetime import datetime,timezone
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -35,20 +35,18 @@ class MainWindow(QtWidgets.QMainWindow):
         spots = False
         try:
             request=requests.get(self.sotaurl,timeout=15.0)
-            spots = json.loads(request.text)
+            spots = loads(request.text)
             self.listWidget.clear()
         except:
             return
         justonce=[]
-        count = 0
-        for i in spots:
+        for count, i in enumerate (spots):
             if self.comboBox_mode.currentText() == 'All' or i['mode'].upper() == self.comboBox_mode.currentText():
                 if self.comboBox_band.currentText() == 'All' or self.getband(i['frequency'].split('.')[0]) == self.comboBox_band.currentText():
                     i['activatorCallsign']=i['activatorCallsign'].replace("\n", "").upper()
                     i['activatorCallsign']=i['activatorCallsign'].replace(" ", "")
                     if i['activatorCallsign'] in justonce:
                         continue
-                    count += 1
                     if count > 20:
                         return
                     justonce.append(i['activatorCallsign'])
