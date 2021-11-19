@@ -9,9 +9,13 @@ Added dropdowns at the top of the screen to filter band and mode.
 
 Written in Python3, using QT5. Either run from source, or if your running Linux, download the binary [here](https://github.com/mbridak/sotacracker/releases/download/21.5.23/sotacracker)
 
-##Running from source.
+## Running from source.
 If you're running from source you can install Python3, then the required moduals PyQt5 and requests, with pip.
 
 `python3 -m pip3 install -r requirements.txt`
+
+Or if you're the Ubuntu/Debian type you can:
+
+`sudo apt install python3-pyqt5 python3-requests`
 
 ![screenshot](https://github.com/mbridak/sotacracker/raw/main/pic/screenshot.png)
