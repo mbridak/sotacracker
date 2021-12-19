@@ -3,7 +3,8 @@
 import logging
 logging.basicConfig(level=logging.WARNING)
 
-import requests, sys, os, socket
+import xmlrpc.client
+import requests, sys, os
 from json import loads
 from PyQt5 import QtCore, QtWidgets, uic
 from PyQt5.QtCore import QDir
@@ -38,10 +39,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.listWidget.clicked.connect(self.spotclicked)
         self.comboBox_band.currentTextChanged.connect(self.getspots)
         self.comboBox_mode.currentTextChanged.connect(self.getspots)
-        self.bw['LSB'] = '2400'
-        self.bw['USB'] = '2400'
-        self.bw['FM'] = '15000'
-        self.bw['CW'] = '200'
+        self.server = xmlrpc.client.ServerProxy("http://localhost:12345")
 
     def relpath(self, filename):
         try:
@@ -82,7 +80,6 @@ class MainWindow(QtWidgets.QMainWindow):
         If rigctld is running on this PC, tell it to tune to the spot freq.
         Otherwise die gracefully.
         """
-
         try:
             item = self.listWidget.currentItem()
             self.lastclicked = item.text()
@@ -90,20 +87,13 @@ class MainWindow(QtWidgets.QMainWindow):
             freq = line[3].split(".")
             mode = line[4].upper()
             combfreq = freq[0]+freq[1].ljust(6,'0')
-            radiosocket = socket.socket()
-            radiosocket.settimeout(0.1)
-            radiosocket.connect((self.rigctld_addr, self.rigctld_port))
-            command = 'F'+combfreq+'\n'
-            radiosocket.send(command.encode('ascii'))
+            self.server.rig.set_frequency(float(combfreq))
             if mode == 'SSB':
                 if int(combfreq) > 10000000:
                     mode = 'USB'
                 else:
                     mode = 'LSB'
-            command = 'M '+mode+ ' ' + self.bw[mode] + '\n'
-            radiosocket.send(command.encode('ascii'))
-            radiosocket.shutdown(socket.SHUT_RDWR)
-            radiosocket.close()
+            self.server.rig.set_mode(mode)
         except:
             pass 
     

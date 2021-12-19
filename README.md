@@ -3,11 +3,15 @@
 
 ![soda cracker](pic/soda-cracker.png)
 
-Pulls latest SOTA spots. Displays them in a compact interface. If you have an instance of `rigctld` running, when you click on a spot your radio will automatically tune to the spotted frequency.
+Pulls latest SOTA spots. Displays them in a compact interface. If you have an instance of `flrig` running, when you click on a spot your radio will automatically tune to the spotted frequency.
 
-Added dropdowns at the top of the screen to filter band and mode.
+## Changes since 21.5.23 Saltine
 
-Written in Python3, using QT5. Either run from source, or if your running Linux, download the binary [here](https://github.com/mbridak/sotacracker/releases/download/21.5.23/sotacracker)
+I ditched using the rigctld daemon supplied by hamlib tools. Instead I'll be using the [flrig's](http://w1hkj.com/files/flrig/) XmlRPC interface. It's way simpler. It's available on all platforms.
+
+For Debian based Linux or Raspberry OS you can:
+
+`sudo apt install flrig`
 
 ## Running from source.
 If you're running from source you can install Python3, then the required moduals PyQt5 and requests, with pip.
