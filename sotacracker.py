@@ -4,19 +4,87 @@
 # pylint: disable=c-extension-no-member
 # pylint: disable=no-name-in-module
 
+import argparse
 import sys
 import os
-import xmlrpc.client
+import re
 import logging
 from datetime import datetime, timezone
 from json import loads
+import psutil
 from PyQt5 import QtCore, QtWidgets, uic
 from PyQt5.QtCore import QDir
 from PyQt5.QtGui import QFontDatabase
-
 import requests
+from lib.cat_interface import CAT
 
-logging.basicConfig(level=logging.WARNING)
+__author__ = "Michael C. Bridak, K6GTE"
+__license__ = "GNU General Public License v3.0"
+
+logger = logging.getLogger("__name__")
+handler = logging.StreamHandler()
+formatter = logging.Formatter(
+    datefmt="%H:%M:%S",
+    fmt="[%(asctime)s] %(levelname)s %(module)s - %(funcName)s Line %(lineno)d:\n%(message)s",
+)
+handler.setFormatter(formatter)
+logger.addHandler(handler)
+
+parser = argparse.ArgumentParser(
+    description=(
+        "sotacracker helps chasers hunt SOTA activators.\n"
+        "Find out more about SOTA at https://www.sota.org.uk/"
+    )
+)
+parser.add_argument(
+    "-s",
+    "--server",
+    type=str,
+    help="Force a server and port address. --server localhost:12345",
+)
+
+parser.add_argument(
+    "-r",
+    action=argparse.BooleanOptionalAction,
+    dest="rigctld",
+    help="Force use of rigctld",
+)
+
+parser.add_argument(
+    "-f",
+    action=argparse.BooleanOptionalAction,
+    dest="flrig",
+    help="Force use of flrig",
+)
+
+parser.add_argument(
+    "-d",
+    action=argparse.BooleanOptionalAction,
+    dest="debug",
+    help="Debug",
+)
+
+args = parser.parse_args()
+
+FORCED_INTERFACE = None
+SERVER_ADDRESS = None
+
+if args.rigctld:
+    FORCED_INTERFACE = "rigctld"
+    SERVER_ADDRESS = "localhost:4532"
+
+if args.flrig:
+    FORCED_INTERFACE = "flrig"
+    SERVER_ADDRESS = "localhost:12345"
+
+if args.server:
+    SERVER_ADDRESS = args.server
+
+if args.debug:
+    logger.setLevel(logging.DEBUG)
+
+logger.debug("Forced Interface: %s", FORCED_INTERFACE)
+logger.debug("Server Address: %s", SERVER_ADDRESS)
 
 
 def relpath(filename):
@@ -56,7 +124,35 @@ class MainWindow(QtWidgets.QMainWindow):
         self.listWidget.clicked.connect(self.spotclicked)
         self.comboBox_band.currentTextChanged.connect(self.getspots)
         self.comboBox_mode.currentTextChanged.connect(self.getspots)
-        self.server = xmlrpc.client.ServerProxy("http://localhost:12345")
+        self.cat_control = None
+        local_flrig = self.check_process("flrig")
+        local_rigctld = self.check_process("rigctld")
+
+        if FORCED_INTERFACE:
+            address, port = SERVER_ADDRESS.split(":")
+            self.cat_control = CAT(FORCED_INTERFACE, address, int(port))
+
+        if self.cat_control is None:
+            if local_flrig:
+                if SERVER_ADDRESS:
+                    address, port = SERVER_ADDRESS.split(":")
+                else:
+                    address, port = "localhost", "12345"
+                self.cat_control = CAT("flrig", address, int(port))
+            if local_rigctld:
+                if SERVER_ADDRESS:
+                    address, port = SERVER_ADDRESS.split(":")
+                else:
+                    address, port = "localhost", "4532"
+                self.cat_control = CAT("rigctld", address, int(port))
+
+    @staticmethod
+    def check_process(name: str) -> bool:
+        """checks to see if flrig is in the active process list"""
+        for proc in psutil.process_iter():
+            if bool(re.match(name, proc.name().lower())):
+                return True
+        return False
 
     @staticmethod
     def relpath(filename: str) -> str:
@@ -123,17 +219,20 @@ class MainWindow(QtWidgets.QMainWindow):
 
         item = self.listWidget.currentItem()
         self.lastclicked = item.text()
-        line = item.text().split()
-        freq = line[3].split(".")
-        mode = line[4].upper()
-        combfreq = freq[0] + freq[1].ljust(6, "0")
-        self.server.rig.set_frequency(float(combfreq))
-        if mode == "SSB":
-            if int(combfreq) > 10000000:
-                mode = "USB"
-            else:
-                mode = "LSB"
-        self.server.rig.set_mode(mode)
+        if self.cat_control is not None:
+            line = item.text().split()
+            freq = line[3].split(".")
+            mode = line[4].upper()
+            combfreq = freq[0] + freq[1].ljust(6, "0")
+            self.cat_control.set_vfo(combfreq)
+            # self.server.rig.set_frequency(float(combfreq))
+            if mode == "SSB":
+                if int(combfreq) > 10000000:
+                    mode = "USB"
+                else:
+                    mode = "LSB"
+            self.cat_control.set_mode(mode)
+            # self.server.rig.set_mode(mode)
 
     def getband(self, freq):
         """converts freq in mhz to band in meters"""
@@ -173,7 +272,7 @@ def main():
     app.setStyle("Fusion")
     font_dir = relpath("font")
     families = load_fonts_from_dir(os.fspath(font_dir))
-    logging.info(families)
+    logger.info(families)
     window = MainWindow()
     window.show()
     window.getspots()
